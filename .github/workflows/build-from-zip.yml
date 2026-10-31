@@ -1,0 +1,40 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extrair o projeto
+        run: unzip -q Windows-Transferir.zip -d project
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-34 build-tools;34.0.0"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+
+      # O comando de build fica DENTRO do zip (ci-build.sh). Assim trocar debug/release
+      # não precisa mais mexer neste arquivo.
+      - name: Compilar
+        working-directory: project
+        run: bash ci-build.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Windows-Transferir
+          path: project/app/build/outputs/apk/**/*.apk
+          if-no-files-found: error
